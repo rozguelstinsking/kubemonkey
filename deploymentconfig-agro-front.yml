@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app: agro-front
+    app_name: agro-front
+    template: nginx
+  name: agro-front
+spec:
+  replicas: 1
+  selector:
+    app_name: agro-front
+    deploymentconfig: agro-front
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        app: agro-front
+        app_name: agro-front
+        deploymentconfig: agro-front
+        template: nginx
+    spec:
+      containers:
+      - env:
+        - name: APP_NAME
+          value: agro-front
+        - name: ARTIFACT_URL
+          value: http://nexus.pro.pandora.mx.corp/repository/web-snapshot/Agrocompara/wfpyme-front/wfpyme-front-0.0.74-SNAPSHOT-1.zip
+        - name: ARTIFACTCONF_URL
+          value: http://nexus.pro.pandora.mx.corp/repository/web-snapshot/Agrocompara/wfpyme-front/config-0.0.74-SNAPSHOT-1.zip
+        - name: JAVA_OPTS_EXT
+          value: ${JAVA_OPTS_EXT}
+        - name: JAVA_PARAMETERS
+          value: ${JAVA_PARAMETERS}
+        - name: PROJECT_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: WILY_MOM_FQDN
+          value: ${WILY_MOM_FQDN}
+        - name: WILY_MOM_PORT
+          value: ${WILY_MOM_PORT}
+        - name: TZ
+          value: America/Mexico_City
+        image: registry.global.paas.gsnetcloud.corp/produban/nginx:3.0.4.RELEASE
+        imagePullPolicy: IfNotPresent
+        name: agro-front
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 8081
+          protocol: TCP
+        resources: {}
+        securityContext:
+          capabilities: {}
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/metadata
+          name: podinfo
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - downwardAPI:
+          defaultMode: 420
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.labels
+            path: labels
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.annotations
+            path: annotations
+        name: podinfo
+  test: false
+  triggers:
+  - type: ConfigChange
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
