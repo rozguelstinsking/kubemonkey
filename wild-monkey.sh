@@ -2,8 +2,9 @@
 
 OUTPUT=""
 
-<<<<<<< HEAD
-oc login -u system -p admin https://127.0.0.1:8443
+#oc login -u system -p admin https://127.0.0.1:8443
+oc login --token=WUSeEXKA-uyxda9lD-7l11vJXs9ID2ivchaXLB6W3Ew https://api.cto2.paas.gsnetcloud.corp:8443
+oc project produbanmx-pre
 
 # get projects and store into file
 oc get projects | awk '{print $1}' > namespaces.txt
@@ -27,9 +28,8 @@ oc project $line
 oc get pods | awk '{print $1}' >  $PODS_FILE
 
 OPTION=awk -v min=5 -v max=10 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'
-=======
 #oc login -u system -p admin https://127.0.0.1:8443
-oc login --token=K6pURWj7NpThAV4UNpPGs0TIETAE-r-pSJgOu4rMvTw
+oc login --token=
 
 
 get_namespaces(){
@@ -111,5 +111,4 @@ case $SELECTION in
    echo "Selection executed"
      ;;
 esac
->>>>>>> 91eff6ad565dd002339ccd16f5609e2f2ff47a3a
 
