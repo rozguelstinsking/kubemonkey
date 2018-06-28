@@ -1,8 +1,7 @@
-!#/bin/bash
+#!/bin/bash
 
 OUTPUT=""
 
-<<<<<<< HEAD
 oc login -u system -p admin https://127.0.0.1:8443
 
 # get projects and store into file
@@ -27,7 +26,6 @@ oc project $line
 oc get pods | awk '{print $1}' >  $PODS_FILE
 
 OPTION=awk -v min=5 -v max=10 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'
-=======
 #oc login -u system -p admin https://127.0.0.1:8443
 oc login --token=K6pURWj7NpThAV4UNpPGs0TIETAE-r-pSJgOu4rMvTw
 
