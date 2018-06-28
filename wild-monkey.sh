@@ -95,6 +95,9 @@ delete_deployment(){
 }
 
 ## Main config
+
+while true; do
+
 get_namespaces()
 
 case $SELECTION in
@@ -111,5 +114,5 @@ case $SELECTION in
    echo "Selection executed"
      ;;
 esac
->>>>>>> 91eff6ad565dd002339ccd16f5609e2f2ff47a3a
 
+done

@@ -2,3 +2,4 @@
 *.yml
 *.yaml
 *OUTPUT
+openshift*
