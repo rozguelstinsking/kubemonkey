@@ -1,4 +1,12 @@
+default
+kube-public
+kube-system
+myproject
 namespace1
-namespace2
 namespace3
+namespace4
 namespace5
+openshift
+openshift-infra
+openshift-node
+openshift-web-console
