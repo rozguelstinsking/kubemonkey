@@ -8,12 +8,12 @@
 # cto1 login
 # oc login --token=WUSeEXKA-uyxda9lD-7l11vJXs9ID2ivchaXLB6W3Ew https://api.cto2.paas.gsnetcloud.corp:8443
 # cto2 login
-oc login --token=A6ql-sBhiyOMR4QTp9jXCworWduBYvfqkT1fIQdk98o https://api.cto2.paas.gsnetcloud.corp:8443
+oc login --token=XOT-RqXkZuM1hdfYNhn2KWDNzR3rI_a3BWQP2m9-muw # https://api.cto2.paas.gsnetcloud.corp:8443
 oc project produbanmx-pre
 
 
 
-get_name_spaces(){
+function get_name_spaces(){
 	echo "into get namespaces"
 	# get projects and store into file
 	oc get projects | awk '{print $1}' > namespaces.txt
@@ -28,35 +28,39 @@ SNAMESPACE=""
 function get_namespace(){
 	SNAMESPACE=$(head -n 1 NS_OUTPUT)
 	echo $SNAMESPACE
-	
 }
 
-PODS_FILE=pods-$SNAMESPACE.txt
-get_pods(){
+PODS_FILE=""
+function get_pods(){
+	PODS_FILE=pods-$SNAMESPACE.txt
 	# set into namespace and get pods
-	get_namespace
-	oc project $snamespace
+	# get_namespace
+	oc project $SNAMESPACE
 	oc get pods | awk '{print $1}' >  $PODS_FILE
-	return
-oc login --token=
 }
 
 
 
-delete_namespace(){
+# this functionality needs to be executed under advanced privileges allowing delete a namespace
+function delete_namespace(){
 	# hardcode for test into produbanmx-dev namespace, comment the herdcode var and uncomment dinamic value  # line=$(head -n 1 OUTPUT) 
-	snamespace=$(head -n 1 NS_OUTPUT)
-	#snamespace=produbanmx-dev
-	echo $snamespace
+	SNAMESPACE=$(head -n 1 NS_OUTPUT)
+	#SNAMESPACE=produbanmx-dev
+	echo $SNAMESPACE
 	# delete project rammdomly
-	oc delete project $snamespace
+	oc delete project $SNAMESPACE
 	# set filename will contains pods
-	return
 }
 
 
 ## delete pods ---
-delete_pod(){
+function delete_pod(){
+
+#1 select a namespace
+	get_namespace
+#2 get pods of namespace
+	get_pods	
+
 	echo "into delete pods"
 	# delete first line of file
 	echo "$(tail -n +2 $PODS_FILE)" > $PODS_FILE
@@ -75,14 +79,16 @@ delete_pod(){
 }
 
 ## delete deploymentconfigs
-delete_deployment(){
-	DCS_FILE=dcs-$snamespace.txt
+function delete_deployment(){
+	get_namespace
+	DCS_FILE=dcs-$SNAMESPACE.txt
 	oc get deploymentconfig | awk '{print $1}' > $DCS_FILE
 	oc export deploymentconfig agro-front
 	# delete first line of file
 	echo "$(tail -n +2 $DCS_FILE)" > $DCS_FILE
 	# sort namespaces (projects) ramdomly and select one namespac
-	sort -R $DCS_FILE | head -n $(wc -l $DCS_FILE | awk '{print $1}') > DCS_OUTPUT
+	sort -R 
+$DCS_FILE | head -n $(wc -l $DCS_FILE | awk '{print $1}') > DCS_OUTPUT
 	SDC=$(head -n 1 DCS_OUTPUT)
 	# create backupup oc deploymentconfig than will be deleted
 	oc export deploymentconfig $SDC > deploymentconfig-$SDC.yml
@@ -90,31 +96,46 @@ delete_deployment(){
 	return 
 }
 
-selectedexpression=0
+SELECTEDEXPRESSION=0
 function select_option(){
 	echo "into select option"
 
-	expressions=(1 1 3)
-	selectedexpression=${expressions[$RANDOM % ${#expressions[@]} ]}
-	echo "$selectedexpression"
+	expressions=(pods pods deploymentconfigs) # (pods namespaces deploymentconfigs)
+	SELECTEDEXPRESSION=${expressions[$RANDOM % ${#expressions[@]} ]}
+	echo "$SELECTEDEXPRESSION"
+	
 	echo "exiting select option"
-	echo $selectedexpression
+	echo $SELECTEDEXPRESSION
 }
 
 ## Main config
 
-case $SELECTION in
-   pods)
-      delete_pod()
-      ;;
-   namespaces)
-      delete_namespace() 
-      ;;
-   deploymentconfigs)
-      delete_deployment() 
-      ;;
-   *)
-   echo "Selection executed"
-     ;;
-esac
+while true; do
 
+echo "============================> we are into loop"
+
+get_name_spaces
+select_option
+
+echo "The value selected was on paaaaassssssss"
+echo $SELECTEDEXPRESSION
+
+	case $SELECTEDEXPRESSION in
+	   pods)
+	      echo "into pods selection"
+	      delete_pod
+	      ;;
+	   namespaces)
+	      echo "into namespaces selection"
+	      delete_namespace 
+	      ;;
+	   deploymentconfigs)
+	      echo "into deploymentconfigs selection"
+	      delete_deployment
+	      ;;
+	   *)
+	   echo "Selection executed"
+	     ;;
+	esac
+sleep 3
+done 
