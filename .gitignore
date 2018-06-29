@@ -5,3 +5,5 @@
 OUTPUT
 pods*
 *.orig
+tests/*
+tests/
