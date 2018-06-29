@@ -3,8 +3,16 @@
 OUTPUT=""
 
 #oc login -u system -p admin https://127.0.0.1:8443
-oc login --token=WUSeEXKA-uyxda9lD-7l11vJXs9ID2ivchaXLB6W3Ew https://api.cto2.paas.gsnetcloud.corp:8443
+
+# TODO: ENCLOSE THIS FUNCTIONALITY INTO IF SENTENCE
+
+# cto1 login
+# oc login --token=WUSeEXKA-uyxda9lD-7l11vJXs9ID2ivchaXLB6W3Ew https://api.cto2.paas.gsnetcloud.corp:8443
+# cto2 login
+oc login --token=A6ql-sBhiyOMR4QTp9jXCworWduBYvfqkT1fIQdk98o https://api.cto2.paas.gsnetcloud.corp:8443
 oc project produbanmx-pre
+
+
 
 # get projects and store into file
 oc get projects | awk '{print $1}' > namespaces.txt
