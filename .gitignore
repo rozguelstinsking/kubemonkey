@@ -7,3 +7,4 @@ pods*
 *.orig
 tests/*
 tests/
+fpass

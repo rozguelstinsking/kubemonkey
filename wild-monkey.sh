@@ -1,16 +1,32 @@
 #!/bin/bash
 
 
-#oc login -u system -p admin https://127.0.0.1:8443
 
 # TODO: ENCLOSE THIS FUNCTIONALITY INTO IF SENTENCE
 
 # cto1 login
 # oc login --token=WUSeEXKA-uyxda9lD-7l11vJXs9ID2ivchaXLB6W3Ew https://api.cto2.paas.gsnetcloud.corp:8443
 # cto2 login
-oc login --token=XOT-RqXkZuM1hdfYNhn2KWDNzR3rI_a3BWQP2m9-muw # https://api.cto2.paas.gsnetcloud.corp:8443
-oc project produbanmx-pre
 
+AVAILABILITY_ZONE=echo $(($RANDOM % 2 + 1))
+
+
+PSWD=$(
+  sed '
+    s/[[:space:]]\{1,\}/ /g; # turn sequences of spacing characters into one SPC
+    s/[^[:print:]]//g; # remove non-printable characters
+    s/^ //; s/ $//; # remove leading and trailing space
+    q; # quit after first line' < ./fpass
+)
+
+if ["$AVAILABILITY_ZONE" -eq 1]
+then
+    oc login -u x916511 -p $PSWD https://api.cto1.paas.gsnetcloud.corp:8443  # https://api.cto2.paas.gsnetcloud.corp:8443
+
+else
+    oc login -u x916511 -p $PSWD https://api.cto2.paas.gsnetcloud.corp:8443
+
+fi
 
 
 function get_name_spaces(){
