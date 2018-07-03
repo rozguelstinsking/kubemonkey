@@ -125,11 +125,11 @@ function select_option(){
 ## Main config
 
 while true; do
-  echo "============================> we are into loop"
+  echo "================================================================> we are into loop"
   select_azone
   get_name_spaces
   select_option
-  echo "The value selected was on paaaaassssssss"
+  echo "*************** The value will execute an action into ************"
   echo $SELECTEDEXPRESSION
 	case $SELECTEDEXPRESSION in
 	   pods)
