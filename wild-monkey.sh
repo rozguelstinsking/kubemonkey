@@ -45,6 +45,14 @@ function get_pods(){
 	oc get pods | awk '{print $1}' >  $PODS_FILE
 }
 
+function isDefault(){
+        if [ "$SNAMESPACE" = "" ] || [ "$SNAMESPACE" = "default" ]
+	then
+	  return 0
+	else
+	  return 1
+}
+
 # this functionality needs to be executed under advanced privileges allowing delete a namespace
 function delete_namespace(){
 	echo "To enable this feature modify this script"
@@ -52,13 +60,15 @@ function delete_namespace(){
 	# hardcode for test into produbanmx-dev namespace, comment the herdcode var and uncomment dinamic value  # line=$(head -n 1 OUTPUT) 
 	SNAMESPACE=$(head -n 1 NS_OUTPUT)
 	ENVIRON=$(echo $SNAMESPACE | cut -f 2 -d '-')
-        if [ "$ENVIRON" = "dev" ] || [ "$ENVIRON" = "pre" ]
+	IS_DEFAULT=$(isDefault)
+        if [ !"$IS_DEFAULT" ] || [ "$ENVIRON" = "dev" ] || [ "$ENVIRON" = "pre" ]
         then
           # SNAMESPACE=produbanmx-dev
 	  echo $SNAMESPACE
 	  # delete project rammdomly
 	  oc delete project $SNAMESPACE
         else
+          echo "Default namespace, never will be deleted"
           echo "To enable this feature modify this script"
           echo "You need an user with elevated provileges"
         fi	
@@ -138,6 +148,7 @@ while true; do
 	      ;;
 	   namespaces)
 	      echo "into namespaces selection"
+              #TODO: Skip default and randomly select another namespace
 	      delete_namespace 
 	      ;;
 	   deploymentconfigs)
@@ -148,5 +159,5 @@ while true; do
 	   echo "Selection executed"
 	     ;;
 	esac
-      sleep 3
+      sleep 30
 done 
