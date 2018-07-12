@@ -8,3 +8,4 @@ pods*
 tests/*
 tests/
 fpass
+*.log

@@ -51,6 +51,7 @@ function isDefault(){
 	  return 0
 	else
 	  return 1
+	fi
 }
 
 # this functionality needs to be executed under advanced privileges allowing delete a namespace
@@ -68,9 +69,11 @@ function delete_namespace(){
 	  # delete project rammdomly
 	  oc delete project $SNAMESPACE
         else
-          echo "Default namespace, never will be deleted"
-          echo "To enable this feature modify this script"
-          echo "You need an user with elevated provileges"
+          echo "          !!!!!!!!!!!!! Default namespace, never will be deleted  !!!!!!!!!!!!!!!!"
+	  echo "                            A new namespace will be selected"
+	  SNAMESPACE=$(head -n 1 NS_OUTPUT)
+          echo "                  To enable this feature modify this script"
+          echo "                  You need an user with elevated provileges"
         fi	
 }
 
@@ -105,7 +108,7 @@ function delete_deployment(){
 
 	ENVIRON=$(echo $SNAMESPACE | cut -f 2 -d '-')
         
-	if [ "$ENVIRON" = "dev" ] || [ "$ENVIRON" = "pre" ]
+	if [ !"$IS_DEFAULT" ] || [ "$ENVIRON" = "dev" ] || [ "$ENVIRON" = "pre" ]
         then
 	  oc get deploymentconfig | awk '{print $1}' > $DCS_FILE
 	  # delete first line of file
@@ -135,7 +138,7 @@ function select_option(){
 ## Main config
 
 while true; do
-  echo "================================================================> we are into loop"
+  echo " <=============================   we are into loop   ===================================> "
   select_azone
   get_name_spaces
   select_option
