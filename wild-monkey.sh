@@ -88,7 +88,7 @@ function delete_pod(){
 	get_pods # Get pods from selected namespace above
 	echo "into delete pods"
 	# delete first line of file
-	echo "$(tail -n +2 $PODS_FILE)" > $PODS_FILE
+	echo "$(tail -n +2 $PODS_FILE)" > $PODS_FILE  # PODS_FILE env_var comes from get_pods
 	# sort pods (projects) ramdomly and select one namespac
 	sort -R $PODS_FILE | head -n $(wc -l $PODS_FILE | awk '{print $1}') > P_OUTPUT
 	# select first line of random output
@@ -99,8 +99,8 @@ function delete_pod(){
 	else 
 	  echo "spod will be deleted"
 	fi
-	# create previous state of namespace.
-	oc get pods > 
+	# TODO create previous state of namespace.
+	oc export $spod > $SNAMESPACE-pod-$spod.yml # Create backup of pod
 	# delete selected pod
 	oc delete pod $spod
 }
@@ -140,10 +140,12 @@ function select_option(){
 }
 
 function restore_env_verifier(){
-
+	# Search into previous state of namespace and compare with actual scan of namespace state
+	# if pods, dc, svc and routes have the same config yml files into list and backup files
+	# Restore will be ready and time of difference will be the bound cleared time.
 }
 
-function create_previous_env(){
+function bacup_env(){
 
 }
 
