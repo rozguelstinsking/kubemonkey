@@ -70,7 +70,9 @@ function delete_namespace(){
 	  oc delete project $SNAMESPACE
         else
           echo "          !!!!!!!!!!!!! Default namespace, never will be deleted  !!!!!!!!!!!!!!!!"
-	  echo "                            A new namespace will be selected"
+	  echo "        
+
+                    A new namespace will be selected"
 	  SNAMESPACE=$(head -n 1 NS_OUTPUT)
           echo "                  To enable this feature modify this script"
           echo "                  You need an user with elevated provileges"
@@ -81,9 +83,9 @@ function delete_namespace(){
 ## delete pods ---
 function delete_pod(){
 #1 select a namespace
-	get_namespace
+	get_namespace # Select namespace from availability zone
 #2 get pods of namespace
-	get_pods	
+	get_pods # Get pods from selected namespace above
 	echo "into delete pods"
 	# delete first line of file
 	echo "$(tail -n +2 $PODS_FILE)" > $PODS_FILE
@@ -97,13 +99,15 @@ function delete_pod(){
 	else 
 	  echo "spod will be deleted"
 	fi
+	# create previous state of namespace.
+	oc get pods > 
 	# delete selected pod
 	oc delete pod $spod
 }
 
 ## delete deploymentconfigs
 function delete_deployment(){
-	get_namespace
+	get_namespace # Will select namespace every time calling function and assign new value to SNAMESPACE env_var  
 	DCS_FILE=dcs-$SNAMESPACE.txt
 
 	ENVIRON=$(echo $SNAMESPACE | cut -f 2 -d '-')
@@ -117,7 +121,7 @@ function delete_deployment(){
 	  sort -R $DCS_FILE | head -n $(wc -l $DCS_FILE | awk '{print $1}') > DCS_OUTPUT
 	  SDC=$(head -n 1 DCS_OUTPUT)
 	  # create backupup oc deploymentconfig than will be deleted
-	  oc export deploymentconfig $SDC > deploymentconfig-$SDC.yml
+	  oc export deploymentconfig $SDC > $SNAMESPACE-dc-$SDC.yml
 	  oc delete all -l app_name=$SDC
         else
 	  echo "The environment selected was productive..... to delete deploymentconfig into this environment please modify the script"
@@ -134,6 +138,18 @@ function select_option(){
 	echo "exiting select option"
 	echo $SELECTEDEXPRESSION
 }
+
+function restore_env_verifier(){
+
+}
+
+function create_previous_env(){
+
+}
+
+
+
+
 
 ## Main config
 
@@ -159,7 +175,7 @@ while true; do
 	      delete_deployment
 	      ;;
 	   *)
-	   echo "Selection executed"
+	   echo "********======================    End of execution   ===========================**********"
 	     ;;
 	esac
       sleep 30
