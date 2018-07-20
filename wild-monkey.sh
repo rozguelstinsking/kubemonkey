@@ -147,6 +147,13 @@ function restore_env_verifier(){
 
 function bacup_env(){
 
+	BACKUP_DIR="../backups/backup-$SNAMESPACE/"
+	if [ ! -d "$BACKUP_DIR" ];
+	then
+		echo "creating backup dir"
+		mkdir $BACKUP_DIR
+	fi
+	oc export svc,dc,route --selector=app_name=$SNAMESPACE -n $SNAMESPACE > $SNAMESPACE.yaml
 }
 
 
