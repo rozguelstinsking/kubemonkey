@@ -145,7 +145,7 @@ function restore_env_verifier(){
 	# Restore will be ready and time of difference will be the bound cleared time.
 }
 
-function bacup_env(){
+function backup_env(){
 
 	BACKUP_DIR="../backups/backup-$SNAMESPACE/"
 	if [ ! -d "$BACKUP_DIR" ];
@@ -153,9 +153,30 @@ function bacup_env(){
 		echo "creating backup dir"
 		mkdir $BACKUP_DIR
 	fi
-	oc export svc,dc,route --selector=app_name=$SNAMESPACE -n $SNAMESPACE > $SNAMESPACE.yaml
+	oc export dc,svc,route --selector=app_name=$SNAMESPACE -n $SNAMESPACE > $BACKUP_DIR-$SNAMESPACE.yml
 }
 
+function clear_namespace(){
+
+	echo "All objects will be deleted into '$SNAMESPACE'"
+
+	# oc get pods,dc,svc,route
+	oc project $SNAMESPACE
+	oc get dc,svc,route | awk '{print $1}' > RES_OUTPUT
+	
+
+	while read p; do
+		echo "into while" 	
+		  echo $p
+		if [ "$p" = "" ] || ["$p" = "NAME"]
+		then
+ 		  echo "Was space blank or NAME "
+		else	
+		  oc delete $p
+		fi
+	done < RES_OUTPUT 
+	echo "Finished"
+}
 
 
 
