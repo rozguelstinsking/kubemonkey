@@ -92,17 +92,17 @@ function delete_pod(){
 	# sort pods (projects) ramdomly and select one namespac
 	sort -R $PODS_FILE | head -n $(wc -l $PODS_FILE | awk '{print $1}') > P_OUTPUT
 	# select first line of random output
-	spod=$(head -n 1 P_OUTPUT)
-	echo $spod
-	if [ "$spod" = "centos-tool-1-zh5jl" ]; then
-	  echo "spod will not be deleted"
+	SPOD=$(head -n 1 P_OUTPUT)
+	echo $SPOD
+	if [ "$SPOD" = "centos-tool-1-zh5jl" ]; then
+	  echo "SPOD will not be deleted"
 	else 
-	  echo "spod will be deleted"
+	  echo "SPOD will be deleted"
 	fi
 	# TODO create previous state of namespace.
-	oc export $spod > $SNAMESPACE-pod-$spod.yml # Create backup of pod
+	oc export $SPOD > $SNAMESPACE-pod-$SPOD.yml # Create backup of pod
 	# delete selected pod
-	oc delete pod $spod
+	oc delete pod $SPOD
 }
 
 ## delete deploymentconfigs
@@ -179,7 +179,44 @@ function clear_namespace(){
 }
 
 
+fucntion get_routes_ms(){
+	
+	echo "Into get routes"
+	IFS='-' tokens=( $SPOD )
+	TWORDS=$(echo ${#tokens[@]})
+	COUNT_TO=$(expr  $TWORDS - 2 )
+	echo "TOTAL WORDS: '$COUNT_TO'"
 
+	for ((i=0; i < "$COUNT_TO" ; i++ ))
+	do
+	echo ${tokens[i]}
+	if [ "$i" -le 0 ]
+	then
+	ROUTE_NAME=${tokens[i]}
+	else
+	ROUTE_NAME="$ROUTE_NAME' '${tokens[i]}"
+	fi
+	echo $ROUTE_NAME
+			
+	done
+	echo $ROUTE_NAME | sed "s/' '/-/g"
+
+	# oc delete route $ROUTE_NAME
+	
+
+}
+
+function poll_ms(){
+	echo "Into polling service"
+	RES_POLL=$(curl -k $ROUTE | grep "Application is not available")
+	if [ "$RES_POLL" != "" ] || [ "$RES_POLL" == "Application is not available" ]
+	then
+		echo "RESTORE ENVIRONMENT" 
+	else
+		echo "SITE IS RESPONDING"
+	fi
+	sleep 60
+}
 
 ## Main config
 
