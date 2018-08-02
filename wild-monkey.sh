@@ -1,5 +1,6 @@
 #!/bin/bash
 ENVIRON=""
+COUNT_MIN=0
 PSWD=$(
   sed '
     s/[[:space:]]\{1,\}/ /g; # turn sequences of spacing characters into one SPC
@@ -8,16 +9,17 @@ PSWD=$(
     q; # quit after first line' < ./fpass
 )
 
-
+# parametrized
 function select_azone(){
 	AVAILABILITY_ZONE=$(echo $(( $RANDOM % 2 + 1 )))
 	if [ "$AVAILABILITY_ZONE" -eq 1 ]
 	then
-	    oc login -u x916511 -p $PSWD https://api.cto1.paas.gsnetcloud.corp:8443  # https://api.cto2.paas.gsnetcloud.corp:8443
+	    oc login -u x916511 -p $PSWD https://api.cto1.paas.gsnetcloud.corp:8443  # https://api.cto2.paas.gsnetcloud.corp:8443 
 	else
 	    oc login -u x916511 -p $PSWD https://api.cto2.paas.gsnetcloud.corp:8443
 	fi
 }
+
 
 function get_name_spaces(){
 	echo "into get namespaces"
@@ -31,7 +33,7 @@ function get_name_spaces(){
 }
 
 SNAMESPACE=""
-function get_namespace(){
+function select_namespace(){
 	SNAMESPACE=$(head -n 1 NS_OUTPUT)
 	echo $SNAMESPACE
 }
@@ -40,7 +42,7 @@ PODS_FILE=""
 function get_pods(){
 	PODS_FILE=pods-$SNAMESPACE.txt
 	# set into namespace and get pods
-	# get_namespace
+	# select_namespace
 	oc project $SNAMESPACE
 	oc get pods | awk '{print $1}' >  $PODS_FILE
 }
@@ -83,7 +85,7 @@ function delete_namespace(){
 ## delete pods ---
 function delete_pod(){
 #1 select a namespace
-	get_namespace # Select namespace from availability zone
+	select_namespace # Select namespace from availability zone
 #2 get pods of namespace
 	get_pods # Get pods from selected namespace above
 	echo "into delete pods"
@@ -107,11 +109,9 @@ function delete_pod(){
 
 ## delete deploymentconfigs
 function delete_deployment(){
-	get_namespace # Will select namespace every time calling function and assign new value to SNAMESPACE env_var  
+	select_namespace # Will select namespace every time calling function and assign new value to SNAMESPACE env_var  
 	DCS_FILE=dcs-$SNAMESPACE.txt
-
 	ENVIRON=$(echo $SNAMESPACE | cut -f 2 -d '-')
-        
 	if [ !"$IS_DEFAULT" ] || [ "$ENVIRON" = "dev" ] || [ "$ENVIRON" = "pre" ]
         then
 	  oc get deploymentconfig | awk '{print $1}' > $DCS_FILE
@@ -146,7 +146,6 @@ function restore_env_verifier(){
 }
 
 function backup_env(){
-
 	BACKUP_DIR="../backups/backup-$SNAMESPACE/"
 	if [ ! -d "$BACKUP_DIR" ];
 	then
@@ -157,14 +156,10 @@ function backup_env(){
 }
 
 function clear_namespace(){
-
 	echo "All objects will be deleted into '$SNAMESPACE'"
-
 	# oc get pods,dc,svc,route
 	oc project $SNAMESPACE
 	oc get dc,svc,route | awk '{print $1}' > RES_OUTPUT
-	
-
 	while read p; do
 		echo "into while" 	
 		  echo $p
@@ -179,14 +174,12 @@ function clear_namespace(){
 }
 
 
-fucntion get_routes_ms(){
-	
+function get_routes_ms(){
 	echo "Into get routes"
 	IFS='-' tokens=( $SPOD )
 	TWORDS=$(echo ${#tokens[@]})
 	COUNT_TO=$(expr  $TWORDS - 2 )
 	echo "TOTAL WORDS: '$COUNT_TO'"
-
 	for ((i=0; i < "$COUNT_TO" ; i++ ))
 	do
 	echo ${tokens[i]}
@@ -197,25 +190,59 @@ fucntion get_routes_ms(){
 	ROUTE_NAME="$ROUTE_NAME' '${tokens[i]}"
 	fi
 	echo $ROUTE_NAME
-			
 	done
 	echo $ROUTE_NAME | sed "s/' '/-/g"
-
 	# oc delete route $ROUTE_NAME
-	
+}
+##############################################################################
+##################################### RP - MONITOR  ############################
+##############################################################################
 
+function create_new_app_from(){
+	oc project 
+	export dc,svc,route >  
+	#Login into BOAW
+	#DEPLOY backup yml
+	#Change route .- delete svc 
+	#expose dc created
 }
 
 function poll_ms(){
+	COUNT_MIN=`expr $COUNT_MIN + 1`
 	echo "Into polling service"
 	RES_POLL=$(curl -k $ROUTE | grep "Application is not available")
-	if [ "$RES_POLL" != "" ] || [ "$RES_POLL" == "Application is not available" ]
+	echo $RES_POLL
+	if [ "$RES_POLL" != "" ]
 	then
-		echo "RESTORE ENVIRONMENT" 
+		echo "RESTORE ENVIRONMENT"
+		if [ "$COUNT_MIN" -eq 3 ]
+		then
+			create_new_app_from
+		else
+			poll_ms
+		fi  
 	else
 		echo "SITE IS RESPONDING"
 	fi
 	sleep 60
+}
+
+
+function get_services(){
+	#
+	# TODO 	
+	
+}
+
+
+function count_retore_time(){
+	DATE_BEGIN=$(date +%S)
+
+	while true do
+
+	
+
+	done
 }
 
 ## Main config
