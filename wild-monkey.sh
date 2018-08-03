@@ -227,6 +227,21 @@ function poll_ms(){
 	sleep 60
 }
 
+function redirect_proxy(){
+	IP_1=192.168.0.15
+	IP_2=0.0.0.0
+	PORT_1=80
+	PORT_2=8080
+	SRVR_DNS_IP1_ACTIVE="server  app1 ${IP_1}\:${PORT_1} check"
+	SRVR_DNS_IP1_DEACTIVE="#server  app1 ${IP_1}\:${PORT_1} check"
+	SRVR_DNS_IP2_ACTIVE="server  app1 ${IP_2}\:${PORT_2} check"
+	SRVR_DNS_IP2_DEACTIVE="#server  app1 ${IP_2}:${PORT_2} check"
+	
+	# TODO CHANGE IPS in proxy and restart
+	sudo systemctl restart haproxy
+
+	
+}
 
 function get_services(){
 	#
