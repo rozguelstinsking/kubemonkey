@@ -199,8 +199,7 @@ function get_routes_ms(){
 ##############################################################################
 
 function create_new_app_from(){
-	oc project 
-	export dc,svc,route >  
+	
 	#Login into BOAW
 	#DEPLOY backup yml
 	#Change route .- delete svc 
