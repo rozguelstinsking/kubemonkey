@@ -95,8 +95,8 @@ function create_new_app_from(){
 
 	#Login into BOAW
 	oc login -u x916511 -p $PSWD $DEPLOY_ZONE
-	clear_namespace	
-
+	clear_namespace		
+	sleep 60
 #DEPLOY backup yml
 	oc create -f $DC_FILE_NAME
 	#Change route .- delete svc
