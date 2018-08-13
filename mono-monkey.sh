@@ -14,6 +14,8 @@ SNAMESPACE=produbanmx-dev
 DC=""
 FQDN=""
 DC_FILE_NAME=""
+H_NAME=""
+N_H_NAME=""
 
 PSWD=$(
   sed '
@@ -23,8 +25,21 @@ PSWD=$(
     q; # quit after first line' < fpass
 )
 
+
 function select_azone(){
 	oc login -u x916511 -p $PSWD $POLL_SVC_ZONE -n $SNAMESPACE # https://api.cto2.paas.gsnetcloud.corp:8443 	
+}
+
+function check_restore(){
+	RESPONSE=$(curl -k $N_H_NAME | grep "Application is not available")
+
+	if [ "$RESPONSE" != "" ]
+	then
+	  echo "doesnt restored app   x'_x "
+	else   
+	  echo ".....  X_X  The application was restored........"
+	  echo true
+	fi	
 }
 
 function clear_namespace(){
@@ -39,6 +54,11 @@ function clear_namespace(){
 	fi	 
 }
 
+function get_host_from_route(){
+	H_NAME=$(oc get route $1 | awk {'print $2'} | tail -n +2)
+	echo $H_NAME
+}
+
 function get_routename_host(){
 	echo "===========>  in get route name from host"
 	ROUTE_NAME=$(oc get routes | grep $ROUTE | awk {'print $1'})
@@ -46,21 +66,7 @@ function get_routename_host(){
 	echo $DC
 } 
 
-function redirect_proxy(){
-	IP_1=192.168.0.15
-	IP_2=0.0.0.0
-	PORT_1=80
-	PORT_2=8080
-	SRVR_DNS_IP1_ACTIVE="server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP1_DEACTIVE="#server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP2_ACTIVE="server  app1 ${IP_2}\:${PORT_2} check"
-	SRVR_DNS_IP2_DEACTIVE="#server  app1 ${IP_2}:${PORT_2} check"
-	
-	# TODO CHANGE IPS in proxy and restart
-	sudo systemctl restart haproxy
 
-	
-}
 
 function create_copy_yml(){
 	echo ".......................................creating copy"
@@ -74,19 +80,12 @@ function create_copy_yml(){
 	oc export dc $DC > $DC_FILE_NAME
 }
 
-function redirect_proxy(){
-	IP_1=192.168.0.15
-	IP_2=0.0.0.0
-	PORT_1=80
-	PORT_2=8080
-	SRVR_DNS_IP1_ACTIVE="server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP1_DEACTIVE="#server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP2_ACTIVE="server  app1 ${IP_2}\:${PORT_2} check"
-	SRVR_DNS_IP2_DEACTIVE="#server  app1 ${IP_2}:${PORT_2} check"
-	
-	# TODO CHANGE IPS in proxy and restart
-	sudo systemctl restart haproxy
-	
+
+function switch_service_zone(){
+	echo "Into switchfunction"
+	sudo sed "s/$1/$2/g" /etc/httpd/conf.d/vhosts.conf
+	## IS NEEDED AN USER SYSTEM TO ALLOW RESTART OF PROXY
+	sudo systemctl restart httpd
 }
 
 function create_new_app_from(){
@@ -103,15 +102,25 @@ function create_new_app_from(){
 	sleep 60
 	oc expose dc $DC 
 	#expose dc created
-	sleep 60 
+	sleep 10
 	oc expose svc $DC
 	sleep 90
+        N_H_NAME=$(get_host_from_route $DC)
+	
+	echo $N_H_NAME
+	VALU=true
+	while "$VALU"; do
+	  VALU=$(check_restore)
+	  sleep 5
+	done
+	
+	switch_service_zone "$H_NAME" "$N_H_NAME"
+	
 	 
 }
 
-
-
 function poll_ms(){
+	H_NAME=$ROUTE
 	COUNT_MIN=`expr $COUNT_MIN + 1`
 	if [ "$COUNT_MIN" -le 1 ]
 	then
@@ -139,7 +148,6 @@ function poll_ms(){
 	fi
 	
 }
-
 
 
 # MAIN CONFIG
