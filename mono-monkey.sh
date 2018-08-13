@@ -66,7 +66,21 @@ function get_routename_host(){
 	echo $DC
 } 
 
+function redirect_proxy(){
+	IP_1=192.168.0.15
+	IP_2=0.0.0.0
+	PORT_1=80
+	PORT_2=8080
+	SRVR_DNS_IP1_ACTIVE="server  app1 ${IP_1}\:${PORT_1} check"
+	SRVR_DNS_IP1_DEACTIVE="#server  app1 ${IP_1}\:${PORT_1} check"
+	SRVR_DNS_IP2_ACTIVE="server  app1 ${IP_2}\:${PORT_2} check"
+	SRVR_DNS_IP2_DEACTIVE="#server  app1 ${IP_2}:${PORT_2} check"
+	
+	# TODO CHANGE IPS in proxy and restart
+	sudo systemctl restart haproxy
 
+	
+}
 
 function create_copy_yml(){
 	echo ".......................................creating copy"
@@ -80,6 +94,15 @@ function create_copy_yml(){
 	oc export dc $DC > $DC_FILE_NAME
 }
 
+	DNS1=$1
+	DNS2=$2
+
+	sudo cat /etc/httpd/conf.d/vhosts.conf
+	EXP=s/$DNS1/$DNS2/
+	SED_EXP="sed -i '$EXP' /etc/httpd/conf.d/vhosts.conf"
+	sudo bash -c "$SED_EXP"
+
+	sudo systemctl restart httpd
 
 function switch_service_zone(){
 	echo "Into switchfunction"

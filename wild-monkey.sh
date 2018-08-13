@@ -1,13 +1,14 @@
 #!/bin/bash
 ENVIRON=""
 COUNT_MIN=0
-PSWD=$(
-  sed '
-    s/[[:space:]]\{1,\}/ /g; # turn sequences of spacing characters into one SPC
-    s/[^[:print:]]//g; # remove non-printable characters
-    s/^ //; s/ $//; # remove leading and trailing space
-    q; # quit after first line' < ./fpass
-)
+
+#PSWD=$(
+#  sed '
+#    s/[[:space:]]\{1,\}/ /g; # turn sequences of spacing characters into one SPC
+#    s/[^[:print:]]//g; # remove non-printable characters
+#    s/^ //; s/ $//; # remove leading and trailing space
+#    q; # quit after first line' < ./fpass
+#)
 
 # parametrized
 function select_azone(){
@@ -142,7 +143,8 @@ function select_option(){
 function restore_env_verifier(){
 	# Search into previous state of namespace and compare with actual scan of namespace state
 	# if pods, dc, svc and routes have the same config yml files into list and backup files
-	# Restore will be ready and time of difference will be the bound cleared time.
+	# Restore will be ready and time of difference will be the bound cleared time
+	echo "Restore_env_verifier_"
 }
 
 function backup_env(){
