@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COUNT_MIN=0
-
+MAKE_COPY=0
 # ROUTE=agro-front-mxdrp-dev.appls.boaw.paas.gsnetcloud.corp
 ROUTE=agro-front-produbanmx-dev.appls.cto1.paas.gsnetcloud.corp
 
@@ -30,14 +30,31 @@ function select_azone(){
 	oc login -u x916511 -p $PSWD $POLL_SVC_ZONE -n $SNAMESPACE # https://api.cto2.paas.gsnetcloud.corp:8443 	
 }
 
+function reset_vars(){
+	ROUTE=$N_H_NAME
+	TMP_ZONE=$DEPLOY_ZONE
+	DEPLOY_ZONE=$POLL_SVC_ZONE
+	POLL_SVC_ZONE=$TMP_ZONE
+}
+
+function timer(){
+	TOTAL_RESTORE_SECONDS=`expr  $1 - $2 `
+	echo "######  Restore success in : $TOTAL_RESTORE_SECONDS seconds"
+	TOTAL_RESTORE_MINUTES=`expr  $TOTAL_RESTORE_SECONDS \ 60 `
+	SECS_FOR_MIN=`expr  $TOTAL_RESTORE_SECONDS % 60 `
+	echo "######  Total mins: $TOTAL_RESTORE_MINUTES with $SECS_FOR_MIN"	
+}
+
+
 function check_restore(){
 	RESPONSE=$(curl -k $N_H_NAME | grep "Application is not available")
 
 	if [ "$RESPONSE" != "" ]
 	then
-	  echo "doesnt restored app   x'_x "
+	  echo " ***********   doesnt restored app   x_x "
 	else   
-	  echo ".....  X_X  The application was restored........"
+	  echo ".....  *_*  The application was restored........"
+	  reset_vars
 	  echo true
 	fi	
 }
@@ -47,7 +64,7 @@ function clear_namespace(){
 	DC_EXIST=$(oc get dc | grep $DC)
 	if [ "$DC_EXIST" != "" ]
 	then
-		echo "!!!!!!!!!!!!!!!!! DC Exist...... will exec house"
+		echo "!!!!!!!!!!!!!!!!! DC Exist...... will exec housekeeping"
 		oc delete all -l app_name=$DC
 	else
 		echo "!!!!!!!!!!!!!!!!! DC doesnt exist"
@@ -67,22 +84,20 @@ function get_routename_host(){
 } 
 
 function redirect_proxy(){
-	IP_1=192.168.0.15
-	IP_2=0.0.0.0
-	PORT_1=80
-	PORT_2=8080
-	SRVR_DNS_IP1_ACTIVE="server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP1_DEACTIVE="#server  app1 ${IP_1}\:${PORT_1} check"
-	SRVR_DNS_IP2_ACTIVE="server  app1 ${IP_2}\:${PORT_2} check"
-	SRVR_DNS_IP2_DEACTIVE="#server  app1 ${IP_2}:${PORT_2} check"
-	
-	# TODO CHANGE IPS in proxy and restart
-	sudo systemctl restart haproxy
 
-	
+	DNS1=$1
+	DNS2=$2
+
+	sudo cat /etc/httpd/conf.d/vhosts.conf
+	EXP=s/$DNS1/$DNS2/
+	SED_EXP="sed -i '$EXP' /etc/httpd/conf.d/vhosts.conf"
+	sudo bash -c "$SED_EXP"
+
+	sudo systemctl restart httpd	
 }
 
 function create_copy_yml(){
+	MAKE_COPY=1;
 	echo ".......................................creating copy"
 	echo "-------------------------------------- will login into $POLL_SVC_ZONE"
 	oc login -u x916511 -p $PSWD $POLL_SVC_ZONE
@@ -94,16 +109,6 @@ function create_copy_yml(){
 	oc export dc $DC > $DC_FILE_NAME
 }
 
-	DNS1=$1
-	DNS2=$2
-
-	sudo cat /etc/httpd/conf.d/vhosts.conf
-	EXP=s/$DNS1/$DNS2/
-	SED_EXP="sed -i '$EXP' /etc/httpd/conf.d/vhosts.conf"
-	sudo bash -c "$SED_EXP"
-
-	sudo systemctl restart httpd
-
 function switch_service_zone(){
 	echo "Into switchfunction"
 	sudo sed "s/$1/$2/g" /etc/httpd/conf.d/vhosts.conf
@@ -112,6 +117,7 @@ function switch_service_zone(){
 }
 
 function create_new_app_from(){
+	START_RESTORE_TIME=$(date +%s)
 	echo "................now we will create an app from the failed service"
 	sleep 5
 
@@ -137,15 +143,16 @@ function create_new_app_from(){
 	  sleep 5
 	done
 	
-	switch_service_zone "$H_NAME" "$N_H_NAME"
-	
-	 
+	redirect_proxy "$H_NAME" "$N_H_NAME"
+	END_RESTORE_TIME=$(date +%s)
+	timer $END_RESTORE_TIME $START_RESTORE_TIME
 }
 
 function poll_ms(){
 	H_NAME=$ROUTE
 	COUNT_MIN=`expr $COUNT_MIN + 1`
-	if [ "$COUNT_MIN" -le 1 ]
+	
+	if [ "$MAKE_COPY" -lt 1 ]
 	then
 	   echo "........ creating copy from polling aplication"
 	   create_copy_yml
@@ -158,16 +165,16 @@ function poll_ms(){
 	if [ "$RES_POLL" != "" ]
 	then
 		echo "--------------RESTORE ENVIRONMENT"
-		if [ "$COUNT_MIN" -eq 3 ]
+		if [ "$COUNT_MIN" -ge 3 ]
 		then
-			echo "------------WILL CREATE NEW APP FROM FAILED SERVICE: $COUNT_MIN"
+			echo "------------  WILL CREATE NEW APP BECAUSE SERVICE FAILED : $COUNT_MIN  TIMES"
 			create_new_app_from
 		else
-			poll_ms
-			sleep 60
+			echo "!!!! Request Failed !!! ${COUNT_MIN} !!!!"
 		fi  
 	else
 		echo "SITE IS RESPONDING"
+     		COUNT_MIN=0
 	fi
 	
 }
@@ -177,6 +184,6 @@ function poll_ms(){
 select_azone
 while true; do
 	poll_ms
-	sleep 60
+	sleep 30
 done
 
