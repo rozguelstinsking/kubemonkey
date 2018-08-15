@@ -16,7 +16,7 @@ FQDN=""
 DC_FILE_NAME=""
 H_NAME=""
 N_H_NAME=""
-
+POLL=true
 PSWD=$(
   sed '
     s/[[:space:]]\{1,\}/ /g; # turn sequences of spacing characters into one SPC
@@ -30,17 +30,40 @@ function select_azone(){
 	oc login -u x916511 -p $PSWD $POLL_SVC_ZONE -n $SNAMESPACE # https://api.cto2.paas.gsnetcloud.corp:8443 	
 }
 
+function stop_polling(){
+	POLL=false
+}
+
 function reset_vars(){
-	ROUTE=$N_H_NAME
 	TMP_ZONE=$DEPLOY_ZONE
 	DEPLOY_ZONE=$POLL_SVC_ZONE
 	POLL_SVC_ZONE=$TMP_ZONE
+	MAKE_COPY=0
+	COUNT_MIN=0
+	SEL_ZONE=$(echo $DEPLOY_ZONE | grep cto1)
+	if [ "$SEL_ZONE" != "" ]
+	then
+		echo "is cto1"
+		SNAMESPACE=produbanmx-dev
+		
+	else
+		echo "is boaw"
+		SNAMESPACE=mxdrp-dev
+	fi
+
+	echo "The deploy zone will change from $TMP_ZONE  to  ---------------------->  $DEPLOY_ZONE"
+		
+	echo "The poll zone will change from $DEPLOY_ZONE to  ---------------------->  $TMP_ZONE"
+	
+        ROUTE=$N_H_NAME
+	echo "the new route polling will be  $ROUTE"
+	
 }
 
 function timer(){
 	TOTAL_RESTORE_SECONDS=`expr  $1 - $2 `
 	echo "######  Restore success in : $TOTAL_RESTORE_SECONDS seconds"
-	TOTAL_RESTORE_MINUTES=`expr  $TOTAL_RESTORE_SECONDS \ 60 `
+	TOTAL_RESTORE_MINUTES=`expr  $TOTAL_RESTORE_SECONDS / 60 `
 	SECS_FOR_MIN=`expr  $TOTAL_RESTORE_SECONDS % 60 `
 	echo "######  Total mins: $TOTAL_RESTORE_MINUTES with $SECS_FOR_MIN"	
 }
@@ -51,11 +74,13 @@ function check_restore(){
 
 	if [ "$RESPONSE" != "" ]
 	then
-	  echo " ***********   doesnt restored app   x_x "
+	  #echo " ***********   doesnt restored app   x_x "
+          echo true
 	else   
-	  echo ".....  *_*  The application was restored........"
-	  reset_vars
-	  echo true
+	  #echo ".....  *_*  The application was restored........"
+	  
+	  echo false
+	reset_vars	
 	fi	
 }
 
@@ -92,7 +117,7 @@ function redirect_proxy(){
 	EXP=s/$DNS1/$DNS2/
 	SED_EXP="sed -i '$EXP' /etc/httpd/conf.d/vhosts.conf"
 	sudo bash -c "$SED_EXP"
-
+	sudo cat /etc/httpd/conf.d/vhosts.conf
 	sudo systemctl restart httpd	
 }
 
@@ -137,15 +162,16 @@ function create_new_app_from(){
         N_H_NAME=$(get_host_from_route $DC)
 	
 	echo $N_H_NAME
-	VALU=true
-	while "$VALU"; do
-	  VALU=$(check_restore)
-	  sleep 5
+	MYVAL=true
+	while "$MYVAL"; do
+	  MYVAL=$(check_restore)
+	  sleep 10
 	done
 	
 	redirect_proxy "$H_NAME" "$N_H_NAME"
 	END_RESTORE_TIME=$(date +%s)
 	timer $END_RESTORE_TIME $START_RESTORE_TIME
+	sleep 120
 }
 
 function poll_ms(){
@@ -169,6 +195,7 @@ function poll_ms(){
 		then
 			echo "------------  WILL CREATE NEW APP BECAUSE SERVICE FAILED : $COUNT_MIN  TIMES"
 			create_new_app_from
+			stop_polling
 		else
 			echo "!!!! Request Failed !!! ${COUNT_MIN} !!!!"
 		fi  
@@ -182,7 +209,7 @@ function poll_ms(){
 
 # MAIN CONFIG
 select_azone
-while true; do
+while "$POLL"; do
 	poll_ms
 	sleep 30
 done
