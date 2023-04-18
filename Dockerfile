@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:22.10
 USER root
 RUN apt-get update && apt-get install apache2 -y && service apache2 start && apt-get install -y apt-transport-https && apt-get install wget -y && apt-get -y install curl && apt-get install net-tools && apt-get install haproxy -y && apt-get clean all
 RUN mkdir /opt/psycho && chmod 755 /opt/psycho
